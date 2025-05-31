@@ -50,7 +50,7 @@ fake_data = {
         'CUET', 'CPL', 'NIFT', 'NEET', 'ISI Admission Test'
     ]
 }
-career_profiles = pd.DataFrame(fake_data)
+
 
 # --- Aptitude Estimation Model (Supervised ML) ---
 class AptitudeEstimator:
@@ -300,7 +300,7 @@ fake_data = {
         'Patent Agent Exam', 'CBIC', 'SSC CGL', 'LIC AAO', 'IBPS'
     ]
 }
-career_profiles = pd.read_csv("career_data.xlsx")
+career_profiles = pd.read_excel("career_data.xlsx")
 
 # --- Dummy Models for Testing ---
 class DummyAptitudeModel:
