@@ -15,7 +15,7 @@ st.set_page_config(
 def add_bg_local():
     with open("background.jpg", "rb") as image_file:
         encoded_string = image_file.read()
-    b64 = base64.b64encode(encoded_string).decode()
+        b64 = base64.b64encode(encoded_string).decode()
     st.markdown(
          f"""
          <style>
@@ -73,6 +73,9 @@ submit = st.button("🚀 Show Me My Career Path!")
 st.markdown("---")
 
 if submit:
+    # Run rain animation once at start of result display
+    rain("✨", speed=10, drop_length=7, drop_radius=5, fall_angle=90)
+
     # Filter by stream
     filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
     # Filter by career aspiration keyword (case insensitive contains)
@@ -84,25 +87,23 @@ if submit:
     else:
         st.success("🎉 Yay! We found some career paths matching your interests! ✨")
 
-        # For simplicity show first match only
+        # Show first matching career only for simplicity
         career_info = filtered_df.iloc[0]
 
-        # Helper to show each section with emoji rain animation
-        def reveal_section(title, content, emoji="✨", delay=1.5):
-            rain(emoji, speed=10, drop_length=7, drop_radius=5, fall_angle=90)
+        def reveal_section(title, content, delay=1.5):
             st.markdown(f"### {title}")
             st.markdown(f"{content}")
             time.sleep(delay)
 
-        reveal_section("🎯 Career Name", f"**{career_info['Career']}**", emoji="🎯")
-        reveal_section("📚 Exams to Prepare For", career_info['Exams'], emoji="📚")
-        reveal_section("🛠️ Required Skills", ", ".join(career_info['Required Skills']), emoji="🛠️")
-        reveal_section("🎓 Education Needed", career_info['Education Level Required'], emoji="🎓")
-        reveal_section("💸 Salary Range (INR/year)", career_info['Salary Range (INR/year)'], emoji="💸")
-        reveal_section("🌐 Work Environment", career_info['Work Environment'], emoji="🌐")
-        reveal_section("🏢 Related Industries", career_info['Related Industries'], emoji="🏢")
-        reveal_section("🧑‍💼 Typical Job Titles", career_info['Typical Job Titles'], emoji="🧑‍💼")
-        reveal_section("🧠 Personality Traits That Fit This Role", career_info['Personality Traits'], emoji="🧠")
+        reveal_section("🎯 Career Name", f"**{career_info['Career']}**")
+        reveal_section("📚 Exams to Prepare For", career_info['Exams'])
+        reveal_section("🛠️ Required Skills", ", ".join(career_info['Required Skills']))
+        reveal_section("🎓 Education Needed", career_info['Education Level Required'])
+        reveal_section("💸 Salary Range (INR/year)", career_info['Salary Range (INR/year)'])
+        reveal_section("🌐 Work Environment", career_info['Work Environment'])
+        reveal_section("🏢 Related Industries", career_info['Related Industries'])
+        reveal_section("🧑‍💼 Typical Job Titles", career_info['Typical Job Titles'])
+        reveal_section("🧠 Personality Traits That Fit This Role", career_info['Personality Traits'])
 
         st.markdown("---")
 
@@ -114,6 +115,7 @@ if submit:
 
         if st.button("🔁 Try Again"):
             st.experimental_rerun()
+
 else:
     st.info("Fill out your stream and career aspiration above, then click the button to find your path! ✨")
 
