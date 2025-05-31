@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import base64
 import time
+
 from streamlit_extras.let_it_rain import rain
 
 # Page config
