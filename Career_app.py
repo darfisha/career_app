@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
+import base64
 from streamlit_extras.let_it_rain import rain
 
 # --- Page Config ---
@@ -14,8 +15,7 @@ st.set_page_config(
 def add_bg_local():
     with open("background.jpg", "rb") as image_file:
         encoded_string = image_file.read()
-        encoded = encoded_string.encode("base64") if hasattr(encoded_string, 'encode') else encoded_string
-        b64 = base64.b64encode(encoded_string).decode()
+    b64 = base64.b64encode(encoded_string).decode()
     st.markdown(
          f"""
          <style>
