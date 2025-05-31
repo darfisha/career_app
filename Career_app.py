@@ -4,15 +4,7 @@ import streamlit as st
 import pandas as pd
 
 # Load dataset
-df = pd.read_excel("career_data.xlsx")
-
-# --- Sidebar Navigation ---
-st.sidebar.page_link("Page 1: Find My Career Path 🔍")
-st.sidebar.page_link("Page 2: Explore All Careers 📚")
-
-# --- Page Routing Logic ---
-if "page" not in st.session_state:
-    st.session_state.page = "home"
+df = pd.read_csv("career_dataset.csv")
 
 # --- Page 1: Career Recommendation ---
 def find_my_career():
@@ -32,11 +24,11 @@ def find_my_career():
         filtered_df = df.copy()
 
         if stream != "Not Sure":
-            filtered_df = filtered_df[filtered_df['Stream'].str.contains(stream)]
+            filtered_df = filtered_df[filtered_df['Stream'].str.contains(stream, case=False)]
 
         if selected_skills:
             for skill in selected_skills:
-                skill_clean = skill.split(" ")[1] if " " in skill else skill
+                skill_clean = skill.split(" ", 1)[1] if " " in skill else skill
                 filtered_df = filtered_df[filtered_df['Required Skills'].str.contains(skill_clean, case=False)]
 
         if exam_input:
@@ -87,8 +79,10 @@ def explore_all():
     st.markdown("---")
     st.markdown("Made with ❤️ by Darfisha Shaikh for Hack the Haze 🚀")
 
-# --- Page Selection Logic ---
-page = st.sidebar.radio("Navigate", ["Find My Career Path 🔍", "Explore All Careers 📚"])
+# --- Sidebar Navigation ---
+page = st.sidebar.radio("📂 Navigate", ["Find My Career Path 🔍", "Explore All Careers 📚"])
+
+# --- Page Rendering ---
 if page == "Find My Career Path 🔍":
     find_my_career()
 elif page == "Explore All Careers 📚":
