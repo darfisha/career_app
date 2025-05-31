@@ -31,7 +31,7 @@ def load_lottiefile(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
 
-success_lottie = load_lottiefile("success.json")  # You need a Lottie JSON animation file here
+
 
 # --- Load Dataset ---
 @st.cache_data
