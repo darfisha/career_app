@@ -22,7 +22,6 @@ def add_bg_local():
             background-attachment: fixed;
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
         }}
         </style>
         """,
@@ -40,8 +39,19 @@ def load_data():
 
 df = load_data()
 
-# --- Header ---
-st.markdown("""
+# --- Animated Header ---
+header_placeholder = st.empty()
+for frame in ["🔍", "📊", "🧭", "✨"]:
+    header_placeholder.markdown(
+        f"""
+        <h1 style='text-align:center; color:#ff5722; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;'>
+            Find Your Future {frame} | AI-Powered Career Guide 🇮🇳
+        </h1>
+        """,
+        unsafe_allow_html=True
+    )
+    time.sleep(0.3)
+header_placeholder.markdown("""
     <h1 style='text-align:center; color:#ff5722; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;'>
         Find Your Future 🔮 | AI-Powered Career Guide for Indian Students 🇮🇳
     </h1>
@@ -68,22 +78,31 @@ submit = st.button("🚀 Show Me My Career Path!")
 
 st.markdown("---")
 
-# --- Reveal Helper Function ---
-def reveal_section(title, content, delay=1.0):
-    with st.expander(title, expanded=True):
-        st.markdown(content)
+# --- Typing Animation Function ---
+def typing_effect(text, speed=0.02):
+    typed = ""
+    placeholder = st.empty()
+    for char in text:
+        typed += char
+        placeholder.markdown(f"### {typed}")
+        time.sleep(speed)
+
+# --- Reveal Helper ---
+def reveal_section(title, content, delay=0.7):
+    typing_effect(title)
+    st.markdown(f"{content}")
     time.sleep(delay)
 
 # --- Show Result ---
 if submit:
     filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
-    if career_aspiration.strip() != "":
+    if career_aspiration.strip():
         filtered_df = filtered_df[filtered_df['Career'].str.contains(career_aspiration.strip(), case=False, na=False)]
 
     if filtered_df.empty:
         st.warning("😞 Oops! No matching careers found. Try different stream or aspiration keywords.")
     else:
-        st.success("🎉 Yay! We found some career paths matching your interests! ✨")
+        st.success("🎉 Yay! We found a career path just for you!")
 
         career_info = filtered_df.iloc[0]
 
