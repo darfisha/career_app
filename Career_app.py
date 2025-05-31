@@ -2,15 +2,13 @@ import streamlit as st
 import pandas as pd
 import time
 import base64
+from streamlit_lottie import st_lottie
+import json
 
 # --- Page Config ---
-st.set_page_config(
-    page_title="Find Your Future: India’s AI Career Guide 🇮🇳✨",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
+st.set_page_config(page_title="AI Career Guide 🇮🇳", layout="centered")
 
-# --- Background Image (local file) ---
+# --- Background Image ---
 def add_bg_local():
     with open("background.jpg", "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode()
@@ -19,16 +17,21 @@ def add_bg_local():
         <style>
         .stApp {{
             background-image: url("data:image/jpg;base64,{encoded_string}");
-            background-attachment: fixed;
             background-size: cover;
-            background-position: center;
+            background-attachment: fixed;
         }}
         </style>
         """,
         unsafe_allow_html=True
     )
-
 add_bg_local()
+
+# --- Load Lottie File ---
+def load_lottiefile(filepath: str):
+    with open(filepath, "r") as f:
+        return json.load(f)
+
+success_lottie = load_lottiefile("success.json")  # You need a Lottie JSON animation file here
 
 # --- Load Dataset ---
 @st.cache_data
@@ -36,75 +39,53 @@ def load_data():
     df = pd.read_excel("career_data.xlsx")
     df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip() for skill in x.split(',')])
     return df
-
 df = load_data()
 
 # --- Animated Header ---
-header_placeholder = st.empty()
-for frame in ["🔍", "📊", "🧭", "✨"]:
-    header_placeholder.markdown(
-        f"""
-        <h1 style='text-align:center; color:#ff5722; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;'>
-            Find Your Future {frame} | AI-Powered Career Guide 🇮🇳
-        </h1>
-        """,
-        unsafe_allow_html=True
-    )
-    time.sleep(0.3)
-header_placeholder.markdown("""
-    <h1 style='text-align:center; color:#ff5722; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;'>
-        Find Your Future 🔮 | AI-Powered Career Guide for Indian Students 🇮🇳
-    </h1>
-    <p style='text-align:center; font-size:18px; color:#6a1b9a;'>
-        Let AI help you find where you truly belong... 🎓📊💻🚀
-    </p>
-""", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;'>🚀 AI Career Guide for Indian Students 🇮🇳</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;'>Let’s find your perfect path... 🎯</p>", unsafe_allow_html=True)
 st.markdown("---")
 
-# --- User Input Section ---
-stream_options = {
-    "Science 🔬": "Science",
-    "Commerce 💰": "Commerce",
-    "Arts 🎨": "Arts"
-}
-
-st.markdown("### What's your academic stream?")
-stream_choice = st.selectbox("", options=list(stream_options.keys()))
+# --- Input Section ---
+stream_options = {"Science 🔬": "Science", "Commerce 💰": "Commerce", "Arts 🎨": "Arts"}
+stream_choice = st.selectbox("Your Academic Stream", list(stream_options.keys()))
 selected_stream = stream_options[stream_choice]
+career_aspiration = st.text_input("Your dream job (e.g., Lawyer, IAS Officer, Data Analyst)")
+submit = st.button("🔍 Reveal My Career Path")
 
-career_aspiration = st.text_input("What's your dream career or aspiration? (e.g., IAS Officer, Lawyer, Data Scientist)")
-
-submit = st.button("🚀 Show Me My Career Path!")
-
-st.markdown("---")
-
-# --- Typing Animation Function ---
-def typing_effect(text, speed=0.02):
-    typed = ""
+# --- Animation Functions ---
+def typing_effect(text, speed=0.01):
     placeholder = st.empty()
+    typed = ""
     for char in text:
         typed += char
         placeholder.markdown(f"### {typed}")
         time.sleep(speed)
 
-# --- Reveal Helper ---
-def reveal_section(title, content, delay=0.7):
+def reveal_section(title, content, delay=0.5):
     typing_effect(title)
-    st.markdown(f"{content}")
+    st.markdown(content)
     time.sleep(delay)
 
-# --- Show Result ---
+# --- Main Logic ---
 if submit:
+    with st.spinner("🔄 Analyzing your stream and aspiration..."):
+        time.sleep(2)
+    st.progress(100)
+
     filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
     if career_aspiration.strip():
         filtered_df = filtered_df[filtered_df['Career'].str.contains(career_aspiration.strip(), case=False, na=False)]
 
     if filtered_df.empty:
-        st.warning("😞 Oops! No matching careers found. Try different stream or aspiration keywords.")
+        st.warning("😔 No match found. Try refining your input.")
     else:
-        st.success("🎉 Yay! We found a career path just for you!")
-
         career_info = filtered_df.iloc[0]
+        st_lottie(success_lottie, height=200, key="career_success")
+
+        for emoji in "✨✨✨✨✨✨":
+            st.markdown(f"<h2 style='text-align:center;'>{emoji}</h2>", unsafe_allow_html=True)
+            time.sleep(0.1)
 
         reveal_section("🎯 Career Name", f"**{career_info['Career']}**")
         reveal_section("📚 Exams to Prepare For", career_info['Exams'])
@@ -114,24 +95,31 @@ if submit:
         reveal_section("🌐 Work Environment", career_info['Work Environment'])
         reveal_section("🏢 Related Industries", career_info['Related Industries'])
         reveal_section("🧑‍💼 Typical Job Titles", career_info['Typical Job Titles'])
-        reveal_section("🧠 Personality Traits That Fit This Role", career_info['Personality Traits'])
+        reveal_section("🧠 Personality Traits", career_info['Personality Traits'])
 
         st.markdown("---")
         st.markdown("""
-        <div style='background-color:#fff3e0; padding:15px; border-radius:8px; color:#bf360c; font-weight:bold;'>
-            ✨ Remember, every great journey begins with a single step. Keep learning and stay curious — your future is bright! 🚀🇮🇳
-        </div>
+        <h3 style="text-align:center; animation: blink 1s infinite;">
+            🌟 Believe in yourself — your dream career awaits! 🌟
+        </h3>
+        <style>
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.2; }
+            100% { opacity: 1; }
+        }
+        </style>
         """, unsafe_allow_html=True)
 
-        if st.button("🔁 Try Again"):
+        if st.button("🔁 Start Over"):
             st.experimental_rerun()
 else:
-    st.info("Fill out your stream and career aspiration above, then click the button to find your path! ✨")
+    st.info("Choose a stream and type in your dream job to start.")
 
 # --- Footer ---
 st.markdown("""
-<hr style="margin-top:40px; margin-bottom:20px;">
-<div style='text-align:center; color:#555; font-size:14px;'>
-    Made with ❤️ by <strong>Darfisha Shaikh</strong> for Hack the Haze 2025 💻🎉
+<hr>
+<div style='text-align:center; font-size:14px; color:#555;'>
+    Made with ❤️ by <strong>Darfisha Shaikh</strong> for Hack the Haze 2025 🎉
 </div>
 """, unsafe_allow_html=True)
