@@ -2,16 +2,28 @@ import streamlit as st
 import pandas as pd
 import base64
 from io import BytesIO
+import random
 
 # Load the dataset
 df = pd.read_excel("career_data.xlsx")
-
-# Preprocess skills for consistent matching
 df['required_skills'] = df['required_skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
 
+# Fun background colors
+page_bg_img = '''
+<style>
+body {
+background-image: linear-gradient(to bottom right, #f7e7ff, #e0f7fa);
+background-size: cover;
+}
+</style>
+'''
+st.markdown(page_bg_img, unsafe_allow_html=True)
+
 # Title
-st.title("🎯 Career Suggester")
-st.markdown("##### Find your ideal career based on your interests and strengths!")
+st.markdown("""
+<h1 style='text-align: center; color: #6a1b9a;'>✨ Career Genie 🧞‍♂️</h1>
+<p style='text-align: center;'>Find magical career paths based on your talents and interests! 🧭</p>
+""", unsafe_allow_html=True)
 
 # --- Stream Selection ---
 stream_map = {
@@ -21,15 +33,12 @@ stream_map = {
     "❓ Not Sure": "Not Sure"
 }
 
-st.markdown("### 🎓 Select Your Stream")
-stream_choice = st.radio("Choose your stream:", list(stream_map.keys()), horizontal=True)
+st.markdown("### 🎓 Choose Your Stream")
+stream_choice = st.radio("Which academic world do you belong to?", list(stream_map.keys()), horizontal=True)
 selected_stream = stream_map[stream_choice]
 
 # --- Skill Selection ---
-# Get all unique skills
 all_skills = sorted({skill.strip().lower() for skills in df['required_skills'] for skill in skills})
-
-# Emoji mapping for some common skills
 emoji_skills = {
     "programming": "💻", "leadership": "🧑‍💼", "communication": "🗣️",
     "creativity": "🎨", "data analysis": "📊", "problem solving": "🧠",
@@ -37,11 +46,11 @@ emoji_skills = {
     "teamwork": "🤝", "research": "🔍"
 }
 
-skill_display = [f"{emoji_skills.get(skill, '')} {skill.title()}" for skill in all_skills]
+skill_display = [f"{emoji_skills.get(skill, '⭐')} {skill.title()}" for skill in all_skills]
 skill_map = dict(zip(skill_display, all_skills))
 
-st.markdown("### 🛠️ Select Your Skills")
-selected_skills_display = st.multiselect("Choose skills that describe you:", options=skill_display)
+st.markdown("### 🛠️ Select Your Magical Skills")
+selected_skills_display = st.multiselect("Pick the skills that describe your strengths:", options=skill_display)
 selected_skills = [skill_map[s] for s in selected_skills_display]
 
 # --- Filter Logic ---
@@ -56,27 +65,37 @@ else:
 if selected_skills:
     filtered_df = filtered_df[filtered_df.apply(match_skills, axis=1)]
 
-# Format results for display
+# --- Display Career Suggestions ---
 if not filtered_df.empty:
-    st.markdown("### 🔍 Career Suggestions")
+    st.markdown("## 🔍 Your Dream Careers")
+    st.success(random.choice([
+        "Great picks! Here’s what suits you best! 🌟",
+        "These careers match your vibe perfectly! 💼",
+        "Based on your skills, these roles await you! 🚀"
+    ]))
+
     filtered_df_display = filtered_df.copy()
     filtered_df_display['required_skills'] = filtered_df_display['required_skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
     filtered_df_display.columns = ['Career 👩‍💼', 'Required Skills 🛠️', 'Stream 🎓', 'Exams 📝']
-    st.dataframe(filtered_df_display)
+    st.dataframe(filtered_df_display, use_container_width=True)
 
-    # Download button (CSV)
+    # Download CSV
     def convert_df_to_csv(df):
         return df.to_csv(index=False).encode('utf-8')
 
     csv = convert_df_to_csv(filtered_df_display)
-    st.download_button("📥 Download as CSV", csv, "career_suggestions.csv", "text/csv")
+    st.download_button("📥 Download Career Report as CSV", csv, "career_suggestions.csv", "text/csv")
 else:
-    st.info("No matching careers found. Try adjusting your stream or skills.")
+    st.warning("Oops! No matching careers found. Try tweaking your stream or skill selections! 🤔")
 
 # --- Reset Button ---
-if st.button("🔄 Reset"):
+if st.button("🔄 Start Over"):
     st.experimental_rerun()
 
 # --- Footer ---
-st.markdown("---")
-st.markdown("<div style='text-align: center;'>Made with ❤️ by Darfisha Shaikh for Hack the Haze</div>", unsafe_allow_html=True)
+st.markdown("""
+---
+<div style='text-align: center;'>
+    Made with ❤️ by <strong>Darfisha Shaikh</strong> for <em>Hack the Haze</em> 🌈
+</div>
+""", unsafe_allow_html=True)
