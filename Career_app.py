@@ -6,7 +6,7 @@ from streamlit_lottie import st_lottie
 import json
 
 # --- Page Config ---
-st.set_page_config(page_title="AI Career Guide 🇮🇳", layout="centered")
+st.set_page_config(page_title="AI Career Guide", layout="centered")
 
 # --- Background Image ---
 def add_bg_local():
