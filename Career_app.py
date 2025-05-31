@@ -59,7 +59,7 @@ def typing_effect(text, speed=0.01):
         placeholder.markdown(f"### {typed}")
         time.sleep(speed)
 
-def reveal_section(title, content, delay=0.5):
+def reveal_section(title, content, delay=0.3):
     typing_effect(title)
     st.markdown(content)
     time.sleep(delay)
@@ -86,9 +86,6 @@ if submit:
         reveal_section("🎓 Education Needed", career_info['Education Level Required'])
         reveal_section("💸 Salary Range (INR/year)", career_info['Salary Range (INR/year)'])
         reveal_section("🌐 Work Environment", career_info['Work Environment'])
-        reveal_section("🏢 Related Industries", career_info['Related Industries'])
-        reveal_section("🧑‍💼 Typical Job Titles", career_info['Typical Job Titles'])
-        reveal_section("🧠 Personality Traits", career_info['Personality Traits'])
 
         st.markdown("---")
         st.markdown("""
