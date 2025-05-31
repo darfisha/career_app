@@ -26,6 +26,7 @@ page_bg_img = '''
 body {
 background-image: linear-gradient(to bottom right, #f7e7ff, #e0f7fa);
 background-size: cover;
+font-family: 'Segoe UI', sans-serif;
 }
 @keyframes bounce {
   0%, 100% {
@@ -35,9 +36,22 @@ background-size: cover;
     transform: translateY(-10px);
   }
 }
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
 .bounce {
   animation: bounce 2s infinite;
   display: inline-block;
+}
+.fadeIn {
+  animation: fadeIn 1s ease-in;
+}
+.dataframe-style {
+  border: 2px solid #6a1b9a;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: #ffffffcc;
 }
 </style>
 '''
@@ -100,19 +114,25 @@ if not filtered_df.empty:
     filtered_df_display = filtered_df.copy()
     filtered_df_display['Required Skills'] = filtered_df_display['Required Skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
 
-    # Select columns to display and rename with emojis
-    columns_to_display = ['Career', 'Required Skills', 'Stream', 'Exams', 'Education Level Required', 'Salary Range (INR/year)']
-    filtered_df_display = filtered_df_display[columns_to_display]
-    filtered_df_display.columns = [
-        'Career 👩‍💼',
-        'Required Skills 🛠️',
-        'Stream 🎓',
-        'Exams 📝',
-        'Education 🎓',
-        'Salary 💰'
+    # Extended columns to show more career info
+    columns_to_display = [
+        'Career', 'Required Skills', 'Stream', 'Exams', 'Education Level Required',
+        'Salary Range (INR/year)', 'Job Demand', 'Work Environment', 'Soft Skills',
+        'Duration of Study', 'Related Industries', 'Typical Job Titles',
+        'Personality Traits', 'Certifications', 'Typical Work Hours'
     ]
+    columns_renamed = [
+        'Career 👩‍💼', 'Required Skills 🛠️', 'Stream 🎓', 'Exams 📝', 'Education 🎓',
+        'Salary 💰', 'Demand 📈', 'Environment 🌍', 'Soft Skills 🤝',
+        'Study Duration ⏳', 'Industries 🏭', 'Job Titles 🧾',
+        'Traits 😎', 'Certifications 📜', 'Work Hours ⏰'
+    ]
+    filtered_df_display = filtered_df_display[columns_to_display]
+    filtered_df_display.columns = columns_renamed
 
+    st.markdown("<div class='dataframe-style fadeIn'>", unsafe_allow_html=True)
     st.dataframe(filtered_df_display, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Download CSV
     def convert_df_to_csv(df):
