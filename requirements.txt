@@ -1,11 +1,6 @@
-Flask
-pandas
-numpy
-scikit-learn
-nltk
-spacy
-torch
-transformers
+streamlit
+Flask>=2.3.0
+pandas>=2.0.0
+numpy>=1.25.0
+scikit-learn>=1.2.0
 joblib
-flask-restful
-flask-cors
