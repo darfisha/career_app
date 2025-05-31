@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 
 # Load dataset
-df = pd.read_csv("career_dataset.csv")
+df = pd.read_excel("career_data.xlsx")
 
 # --- Sidebar Navigation ---
 st.sidebar.page_link("Page 1: Find My Career Path 🔍")
