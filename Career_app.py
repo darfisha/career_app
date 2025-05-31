@@ -6,7 +6,7 @@ import random
 
 # Load the dataset
 df = pd.read_excel("career_data.xlsx")
-df['Required skills'] = df['Required skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
+df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
 
 # Fun background colors
 page_bg_img = '''
