@@ -254,7 +254,7 @@ with st.expander("🔍 Sample Data Preview"):
     st.dataframe(career_profiles)
 
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #888;'>Made with ❤️ by your AI Career Guide</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888;'>Made by Darfisha Shaikh </p>", unsafe_allow_html=True)
 
 # To run this app with Streamlit:
 # 1. Open a terminal or command prompt.
