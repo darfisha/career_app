@@ -80,10 +80,6 @@ if submit:
         career_info = filtered_df.iloc[0]
         
 
-        for emoji in "✨✨✨✨✨✨":
-            st.markdown(f"<h2 style='text-align:center;'>{emoji}</h2>", unsafe_allow_html=True)
-            time.sleep(0.1)
-
         reveal_section("🎯 Career Name", f"**{career_info['Career']}**")
         reveal_section("📚 Exams to Prepare For", career_info['Exams'])
         reveal_section("🛠️ Required Skills", ", ".join(career_info['Required Skills']))
