@@ -1,16 +1,23 @@
 import streamlit as st
 import pandas as pd
+import base64
+from io import BytesIO
 import random
 
-# Load the dataset with error handling
-try:
-    df = pd.read_excel("career_data.xlsx")
-except FileNotFoundError:
-    st.error("Error: 'career_data.xlsx' file not found! Please upload it or check the file path.")
-    st.stop()
+# Load the dataset with error handling and caching
+@st.cache_data
 
-# Process Required Skills column to list of lowercase skills
-df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
+def load_data():
+    try:
+        df = pd.read_excel("career_data.xlsx")
+        df['required_skills'] = df['required_skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
+        return df
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+        return pd.DataFrame(columns=['career', 'required_skills', 'stream', 'exams'])
+
+# Load data
+df = load_data()
 
 # Fun background colors
 page_bg_img = '''
@@ -42,7 +49,7 @@ stream_choice = st.radio("Which academic world do you belong to?", list(stream_m
 selected_stream = stream_map[stream_choice]
 
 # --- Skill Selection ---
-all_skills = sorted({skill.strip().lower() for skills in df['Required Skills'] for skill in skills})
+all_skills = sorted({skill.strip().lower() for skills in df['required_skills'] for skill in skills})
 emoji_skills = {
     "programming": "💻", "leadership": "🧑‍💼", "communication": "🗣️",
     "creativity": "🎨", "data analysis": "📊", "problem solving": "🧠",
@@ -58,16 +65,14 @@ selected_skills_display = st.multiselect("Pick the skills that describe your str
 selected_skills = [skill_map[s] for s in selected_skills_display]
 
 # --- Filter Logic ---
-def match_skills(row):
-    return all(skill in row['Required Skills'] for skill in selected_skills)
-
 if selected_stream != "Not Sure":
-    filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
+    filtered_df = df[df['stream'].str.lower() == selected_stream.lower()]
 else:
     filtered_df = df.copy()
 
 if selected_skills:
-    filtered_df = filtered_df[filtered_df.apply(match_skills, axis=1)]
+    # Use set operations for efficiency
+    filtered_df = filtered_df[filtered_df['required_skills'].apply(lambda x: set(selected_skills).issubset(set(x)))]
 
 # --- Display Career Suggestions ---
 if not filtered_df.empty:
@@ -78,12 +83,10 @@ if not filtered_df.empty:
         "Based on your skills, these roles await you! 🚀"
     ]))
 
-    # Select only relevant columns to display and rename them
-    filtered_df_display = filtered_df[['Career', 'Required Skills', 'Stream', 'Exams']].copy()
-    filtered_df_display['Required Skills'] = filtered_df_display['Required Skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
+    filtered_df_display = filtered_df.copy()
+    filtered_df_display['required_skills'] = filtered_df_display['required_skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
     filtered_df_display.columns = ['Career 👩‍💼', 'Required Skills 🛠️', 'Stream 🎓', 'Exams 📝']
-
-    st.dataframe(filtered_df_display.reset_index(drop=True), use_container_width=True)
+    st.dataframe(filtered_df_display, use_container_width=True)
 
     # Download CSV
     def convert_df_to_csv(df):
