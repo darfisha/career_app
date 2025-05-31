@@ -7,3 +7,4 @@ joblib
 openpyxl
 streamlit-extras
 streamlit-timeline
+streamlit_lottie
