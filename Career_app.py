@@ -1,108 +1,126 @@
 import streamlit as st
 import pandas as pd
 import time
-from streamlit_lottie import st_lottie
-import requests
+from streamlit_extras.let_it_rain import rain
 
-# --- Load Lottie JSON from URL ---
-def load_lottieurl(url):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
+# --- Page Config ---
+st.set_page_config(
+    page_title="Find Your Future: India’s AI Career Guide 🇮🇳✨",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-# --- Load your dataset ---
+# --- Background Image (local file) ---
+def add_bg_local():
+    with open("background.jpg", "rb") as image_file:
+        encoded_string = image_file.read()
+        encoded = encoded_string.encode("base64") if hasattr(encoded_string, 'encode') else encoded_string
+        b64 = base64.b64encode(encoded_string).decode()
+    st.markdown(
+         f"""
+         <style>
+         .stApp {{
+             background-image: url("data:image/jpg;base64,{b64}");
+             background-attachment: fixed;
+             background-size: cover;
+             background-position: center;
+             background-repeat: no-repeat;
+         }}
+         </style>
+         """,
+         unsafe_allow_html=True
+     )
+
+add_bg_local()
+
+# --- Load Dataset ---
 @st.cache_data
 def load_data():
-    # Replace this with your actual dataset path
-    df = pd.read_excel('career_data.xlsx')
-    # Drop unnecessary columns
-    df = df.drop(columns=['Certifications', 'Typical Work Hours'], errors='ignore')
+    df = pd.read_excel("career_data.xlsx")
+    # Process skills into list
+    df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip() for skill in x.split(',')])
     return df
 
 df = load_data()
 
-# --- Page config ---
-st.set_page_config(page_title="Find Your Future 🔮 | AI Career Guide 🇮🇳", layout="centered")
-
-# --- Background image CSS ---
-page_bg_img = '''
-<style>
-body {
-  background-image: url("background.jpg");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  color: #333;
-}
-.stApp {
-  background: rgba(255, 255, 255, 0.85);
-  padding: 2rem 2rem 3rem 2rem;
-  border-radius: 10px;
-}
-</style>
-'''
-st.markdown(page_bg_img, unsafe_allow_html=True)
-
-# --- Welcome Lottie animation ---
-lottie_welcome = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_jbrw3hcz.json")  # fun waving animation
-
-st_lottie(lottie_welcome, height=150, key="welcome")
-
 # --- Header ---
-st.title("Find Your Future 🔮 | AI-Powered Career Guide for Indian Students 🇮🇳")
-st.markdown("Let AI help you find where you truly belong... 🎓📊💻🚀")
+st.markdown("""
+    <h1 style='text-align:center; color:#ff5722; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;'>
+        Find Your Future 🔮 | AI-Powered Career Guide for Indian Students 🇮🇳
+    </h1>
+    <p style='text-align:center; font-size:18px; color:#6a1b9a;'>
+        Let AI help you find where you truly belong... 🎓📊💻🚀
+    </p>
+""", unsafe_allow_html=True)
+
+st.markdown("---")
 
 # --- User Input Section ---
-stream_choice = st.selectbox("What’s your academic stream? 🔬💰🎨", options=["Science", "Commerce", "Arts"])
-dream_career = st.text_input("What’s your dream career or aspiration? (e.g., IAS Officer, Lawyer, Data Scientist)")
+stream_options = {
+    "Science 🔬": "Science",
+    "Commerce 💰": "Commerce",
+    "Arts 🎨": "Arts"
+}
 
-if st.button("🚀 Show Me My Career Path!"):
-    # Filter dataframe based on stream and partial match in career
-    filtered_df = df[
-        (df['Stream'].str.lower() == stream_choice.lower()) &
-        (df['Career'].str.lower().str.contains(dream_career.lower()))
-    ]
+st.markdown("### What's your academic stream?")
+stream_choice = st.selectbox("", options=list(stream_options.keys()))
+selected_stream = stream_options[stream_choice]
+
+career_aspiration = st.text_input("What's your dream career or aspiration? (e.g., IAS Officer, Lawyer, Data Scientist)")
+
+submit = st.button("🚀 Show Me My Career Path!")
+
+st.markdown("---")
+
+if submit:
+    # Filter by stream
+    filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
+    # Filter by career aspiration keyword (case insensitive contains)
+    if career_aspiration.strip() != "":
+        filtered_df = filtered_df[filtered_df['Career'].str.contains(career_aspiration.strip(), case=False, na=False)]
 
     if filtered_df.empty:
-        st.error("Sorry, no career found matching your input. Try different keywords or stream.")
+        st.warning("😞 Oops! No matching careers found. Try different stream or aspiration keywords.")
     else:
-        # Just take first match for simplicity
+        st.success("🎉 Yay! We found some career paths matching your interests! ✨")
+
+        # For simplicity show first match only
         career_info = filtered_df.iloc[0]
 
-        # Celebration Lottie
-        lottie_celebration = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_touohxv0.json")  # confetti celebration
-        st_lottie(lottie_celebration, height=150, key="celebration")
+        # Helper to show each section with emoji rain animation
+        def reveal_section(title, content, emoji="✨", delay=1.5):
+            rain(emoji, speed=10, drop_length=7, drop_radius=5, fall_angle=90)
+            st.markdown(f"### {title}")
+            st.markdown(f"{content}")
+            time.sleep(delay)
 
-        # Show career name big and bold
-        st.markdown(f"## 🎯 {career_info['Career']}")
+        reveal_section("🎯 Career Name", f"**{career_info['Career']}**", emoji="🎯")
+        reveal_section("📚 Exams to Prepare For", career_info['Exams'], emoji="📚")
+        reveal_section("🛠️ Required Skills", ", ".join(career_info['Required Skills']), emoji="🛠️")
+        reveal_section("🎓 Education Needed", career_info['Education Level Required'], emoji="🎓")
+        reveal_section("💸 Salary Range (INR/year)", career_info['Salary Range (INR/year)'], emoji="💸")
+        reveal_section("🌐 Work Environment", career_info['Work Environment'], emoji="🌐")
+        reveal_section("🏢 Related Industries", career_info['Related Industries'], emoji="🏢")
+        reveal_section("🧑‍💼 Typical Job Titles", career_info['Typical Job Titles'], emoji="🧑‍💼")
+        reveal_section("🧠 Personality Traits That Fit This Role", career_info['Personality Traits'], emoji="🧠")
 
-        # Define roadmap steps
-        steps = [
-            ("📝 Exams to Prepare For", career_info['Exams']),
-            ("🛠️ Required Skills", career_info['Required Skills']),
-            ("🎓 Education Needed", career_info['Education Level Required']),
-            ("💸 Salary Range in India", career_info['Salary Range (INR/year)']),
-            ("🌐 Work Environment", career_info['Work Environment']),
-            ("🏢 Industries You’ll Work In", career_info['Related Industries']),
-            ("🧑‍💼 Typical Job Titles", career_info['Typical Job Titles']),
-            ("🧠 Personality Traits That Fit This Role", career_info['Personality Traits']),
-        ]
+        st.markdown("---")
 
-        # Animated roadmap display
-        for i, (title, content) in enumerate(steps, 1):
-            st.markdown(f"### Step {i}: {title}")
-            st.write(content)
-            time.sleep(1)  # 1 second delay for animation effect
-
-        # Motivational message
         st.markdown("""
-        ---
-        💡 **Remember:** Your journey is unique and filled with endless possibilities. 
-        Stay curious, work hard, and believe in yourself! The future belongs to you. 🚀✨
-        """)
+        <div style='background-color:#fff3e0; padding:15px; border-radius:8px; color:#bf360c; font-weight:bold;'>
+            ✨ Remember, every great journey begins with a single step. Keep learning and stay curious — your future is bright! 🚀🇮🇳
+        </div>
+        """, unsafe_allow_html=True)
 
-        # Try again button to reset inputs
         if st.button("🔁 Try Again"):
             st.experimental_rerun()
+else:
+    st.info("Fill out your stream and career aspiration above, then click the button to find your path! ✨")
+
+# --- Footer ---
+st.markdown("""
+<hr style="margin-top:40px; margin-bottom:20px;">
+<div style='text-align:center; color:#555; font-size:14px;'>
+    Made with ❤️ by <strong>Darfisha Shaikh</strong> for Hack the Haze 2025 💻🎉
+</div>
+""", unsafe_allow_html=True)
