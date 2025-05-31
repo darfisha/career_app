@@ -300,10 +300,7 @@ fake_data = {
         'Patent Agent Exam', 'CBIC', 'SSC CGL', 'LIC AAO', 'IBPS'
     ]
 }
-career_profiles = pd.DataFrame(fake_data)
-career_profiles.to_csv('indian_career_profiles.csv', index=False)
-career_profiles = pd.DataFrame(fake_data)
-career_profiles.to_csv('indian_career_profiles.csv', index=False)
+career_profiles = pd.read_csv("career_data.xlsx")
 
 # --- Dummy Models for Testing ---
 class DummyAptitudeModel:
