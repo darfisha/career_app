@@ -26,10 +26,7 @@ def add_bg_local():
     )
 add_bg_local()
 
-# --- Load Lottie File ---
-def load_lottiefile(filepath: str):
-    with open(filepath, "r") as f:
-        return json.load(f)
+
 
 
 
@@ -81,7 +78,7 @@ if submit:
         st.warning("😔 No match found. Try refining your input.")
     else:
         career_info = filtered_df.iloc[0]
-        st_lottie(success_lottie, height=200, key="career_success")
+        
 
         for emoji in "✨✨✨✨✨✨":
             st.markdown(f"<h2 style='text-align:center;'>{emoji}</h2>", unsafe_allow_html=True)
