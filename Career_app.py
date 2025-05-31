@@ -4,7 +4,9 @@ import streamlit as st
 import pandas as pd
 
 # Load dataset
-df = pd.read_excel("career_data.xlsx")
+df = pd.read_csv("career_dataset.csv")
+
+# --- Page Functions ---
 
 # --- Page 1: Career Recommendation ---
 def find_my_career():
@@ -24,15 +26,15 @@ def find_my_career():
         filtered_df = df.copy()
 
         if stream != "Not Sure":
-            filtered_df = filtered_df[filtered_df['Stream'].str.contains(stream, case=False)]
+            filtered_df = filtered_df[filtered_df['Stream'].str.contains(stream, case=False, na=False)]
 
         if selected_skills:
             for skill in selected_skills:
-                skill_clean = skill.split(" ", 1)[1] if " " in skill else skill
-                filtered_df = filtered_df[filtered_df['Required Skills'].str.contains(skill_clean, case=False)]
+                skill_clean = skill.split(" ")[1] if " " in skill else skill
+                filtered_df = filtered_df[filtered_df['Required Skills'].str.contains(skill_clean, case=False, na=False)]
 
         if exam_input:
-            filtered_df = filtered_df[filtered_df['Exams'].str.contains(exam_input, case=False)]
+            filtered_df = filtered_df[filtered_df['Exams'].str.contains(exam_input, case=False, na=False)]
 
         st.subheader("🔎 Recommended Careers")
         if not filtered_df.empty:
@@ -57,20 +59,20 @@ def explore_all():
     st.title("Explore All Careers 📚")
     st.markdown("Search, filter, and discover all available career options! 🧭")
 
-    stream_filter = st.selectbox("Filter by stream 🎓", ["All"] + df['Stream'].unique().tolist())
+    stream_filter = st.selectbox("Filter by stream 🎓", ["All"] + sorted(df['Stream'].dropna().unique().tolist()))
     exam_filter = st.text_input("Filter by exam ✍️")
     skill_filter = st.text_input("Filter by skill 🛠️")
     trait_filter = st.text_input("Filter by personality trait 🌟")
 
     filtered_df = df.copy()
     if stream_filter != "All":
-        filtered_df = filtered_df[filtered_df['Stream'] == stream_filter]
+        filtered_df = filtered_df[filtered_df['Stream'].str.contains(stream_filter, case=False, na=False)]
     if exam_filter:
-        filtered_df = filtered_df[filtered_df['Exams'].str.contains(exam_filter, case=False)]
+        filtered_df = filtered_df[filtered_df['Exams'].str.contains(exam_filter, case=False, na=False)]
     if skill_filter:
-        filtered_df = filtered_df[filtered_df['Required Skills'].str.contains(skill_filter, case=False)]
+        filtered_df = filtered_df[filtered_df['Required Skills'].str.contains(skill_filter, case=False, na=False)]
     if trait_filter:
-        filtered_df = filtered_df[filtered_df['Personality Traits'].str.contains(trait_filter, case=False)]
+        filtered_df = filtered_df[filtered_df['Personality Traits'].str.contains(trait_filter, case=False, na=False)]
 
     st.dataframe(filtered_df, use_container_width=True)
 
@@ -80,9 +82,10 @@ def explore_all():
     st.markdown("Made with ❤️ by Darfisha Shaikh for Hack the Haze 🚀")
 
 # --- Sidebar Navigation ---
-page = st.sidebar.radio("📂 Navigate", ["Find My Career Path 🔍", "Explore All Careers 📚"])
+st.sidebar.title("Career Compass 🔭")
+page = st.sidebar.radio("Navigate", ["Find My Career Path 🔍", "Explore All Careers 📚"])
 
-# --- Page Rendering ---
+# --- Page Selection Logic ---
 if page == "Find My Career Path 🔍":
     find_my_career()
 elif page == "Explore All Careers 📚":
