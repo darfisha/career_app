@@ -155,8 +155,8 @@ fake_data = {
         'UPSC', 'JEE', 'NEET', 'CTET', 'CLAT'
     ]
 }
-career_profiles = pd.DataFrame(fake_data)
-career_profiles.to_csv('indian_career_profiles.csv', index=False)
+career_profiles = pd.DataFrame('indian_career_profiles.csv', index=False)
+
 
 # --- Dummy Models for Testing ---
 class DummyAptitudeModel:
@@ -262,3 +262,6 @@ st.markdown("<p style='text-align: center; color: #888;'>Made by Darfisha Shaikh
 # 3. Run the following command:
 #    streamlit run "import numpy as np.py"
 # (Ensure you have Streamlit installed: pip install streamlit)
+
+# Load Indian career profiles from CSV instead of using fake data
+career_profiles = pd.read_csv('indian_career_profiles.csv')
