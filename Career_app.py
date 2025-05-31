@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 
 # Load dataset
-df = pd.read_csv("career_dataset.csv")
+df = pd.read_excel("career_data.xlsx")
 
 # --- Page 1: Career Recommendation ---
 def find_my_career():
