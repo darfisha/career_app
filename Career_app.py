@@ -15,7 +15,7 @@ def load_lottieurl(url):
 @st.cache_data
 def load_data():
     # Replace this with your actual dataset path
-    df = pd.read_csv('career_data.csv')
+    df = pd.read_excel('career_data.xlsx')
     # Drop unnecessary columns
     df = df.drop(columns=['Certifications', 'Typical Work Hours'], errors='ignore')
     return df
