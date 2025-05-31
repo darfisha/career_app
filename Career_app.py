@@ -10,11 +10,11 @@ import random
 def load_data():
     try:
         df = pd.read_excel("career_data.xlsx")
-        df['required_skills'] = df['required_skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
+        df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
         return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
-        return pd.DataFrame(columns=['career', 'required_skills', 'stream', 'exams'])
+        return pd.DataFrame(columns=['Career', 'Required Skills', 'Stream', 'Exams'])
 
 # Load data
 df = load_data()
@@ -49,62 +49,8 @@ stream_choice = st.radio("Which academic world do you belong to?", list(stream_m
 selected_stream = stream_map[stream_choice]
 
 # --- Skill Selection ---
-all_skills = sorted({skill.strip().lower() for skills in df['required_skills'] for skill in skills})
+all_skills = sorted({skill.strip().lower() for skills in df['Required Skills'] for skill in skills})
 emoji_skills = {
     "programming": "💻", "leadership": "🧑‍💼", "communication": "🗣️",
     "creativity": "🎨", "data analysis": "📊", "problem solving": "🧠",
-    "teaching": "📚", "empathy": "❤️", "law": "⚖️", "biology": "🧬",
-    "teamwork": "🤝", "research": "🔍"
-}
-
-skill_display = [f"{emoji_skills.get(skill, '⭐')} {skill.title()}" for skill in all_skills]
-skill_map = dict(zip(skill_display, all_skills))
-
-st.markdown("### 🛠️ Select Your Magical Skills")
-selected_skills_display = st.multiselect("Pick the skills that describe your strengths:", options=skill_display)
-selected_skills = [skill_map[s] for s in selected_skills_display]
-
-# --- Filter Logic ---
-if selected_stream != "Not Sure":
-    filtered_df = df[df['stream'].str.lower() == selected_stream.lower()]
-else:
-    filtered_df = df.copy()
-
-if selected_skills:
-    # Use set operations for efficiency
-    filtered_df = filtered_df[filtered_df['required_skills'].apply(lambda x: set(selected_skills).issubset(set(x)))]
-
-# --- Display Career Suggestions ---
-if not filtered_df.empty:
-    st.markdown("## 🔍 Your Dream Careers")
-    st.success(random.choice([
-        "Great picks! Here’s what suits you best! 🌟",
-        "These careers match your vibe perfectly! 💼",
-        "Based on your skills, these roles await you! 🚀"
-    ]))
-
-    filtered_df_display = filtered_df.copy()
-    filtered_df_display['required_skills'] = filtered_df_display['required_skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
-    filtered_df_display.columns = ['Career 👩‍💼', 'Required Skills 🛠️', 'Stream 🎓', 'Exams 📝']
-    st.dataframe(filtered_df_display, use_container_width=True)
-
-    # Download CSV
-    def convert_df_to_csv(df):
-        return df.to_csv(index=False).encode('utf-8')
-
-    csv = convert_df_to_csv(filtered_df_display)
-    st.download_button("📥 Download Career Report as CSV", csv, "career_suggestions.csv", "text/csv")
-else:
-    st.warning("Oops! No matching careers found. Try tweaking your stream or skill selections! 🤔")
-
-# --- Reset Button ---
-if st.button("🔄 Start Over"):
-    st.experimental_rerun()
-
-# --- Footer ---
-st.markdown("""
----
-<div style='text-align: center;'>
-    Made with ❤️ by <strong>Darfisha Shaikh</strong> for <em>Hack the Haze</em> 🌈
-</div>
-""", unsafe_allow_html=True)
+    "teaching": "📚", "empathy": "❤️", "law": "
