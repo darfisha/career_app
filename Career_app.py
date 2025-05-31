@@ -1,11 +1,15 @@
 import streamlit as st
 import pandas as pd
-import base64
-from io import BytesIO
 import random
 
-# Load the dataset
-df = pd.read_excel("career_data.xlsx")
+# Load the dataset with error handling
+try:
+    df = pd.read_excel("career_data.xlsx")
+except FileNotFoundError:
+    st.error("Error: 'career_data.xlsx' file not found! Please upload it or check the file path.")
+    st.stop()
+
+# Process Required Skills column to list of lowercase skills
 df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
 
 # Fun background colors
@@ -74,10 +78,12 @@ if not filtered_df.empty:
         "Based on your skills, these roles await you! 🚀"
     ]))
 
-    filtered_df_display = filtered_df.copy()
+    # Select only relevant columns to display and rename them
+    filtered_df_display = filtered_df[['Career', 'Required Skills', 'Stream', 'Exams']].copy()
     filtered_df_display['Required Skills'] = filtered_df_display['Required Skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
     filtered_df_display.columns = ['Career 👩‍💼', 'Required Skills 🛠️', 'Stream 🎓', 'Exams 📝']
-    st.dataframe(filtered_df_display, use_container_width=True)
+
+    st.dataframe(filtered_df_display.reset_index(drop=True), use_container_width=True)
 
     # Download CSV
     def convert_df_to_csv(df):
