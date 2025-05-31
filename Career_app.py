@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import time
 import base64
-from streamlit_extras.let_it_rain import rain
 
 # --- Page Config ---
 st.set_page_config(
@@ -14,22 +13,21 @@ st.set_page_config(
 # --- Background Image (local file) ---
 def add_bg_local():
     with open("background.jpg", "rb") as image_file:
-        encoded_string = image_file.read()
-        b64 = base64.b64encode(encoded_string).decode()
+        encoded_string = base64.b64encode(image_file.read()).decode()
     st.markdown(
-         f"""
-         <style>
-         .stApp {{
-             background-image: url("data:image/jpg;base64,{b64}");
-             background-attachment: fixed;
-             background-size: cover;
-             background-position: center;
-             background-repeat: no-repeat;
-         }}
-         </style>
-         """,
-         unsafe_allow_html=True
-     )
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{encoded_string}");
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 add_bg_local()
 
@@ -37,7 +35,6 @@ add_bg_local()
 @st.cache_data
 def load_data():
     df = pd.read_excel("career_data.xlsx")
-    # Process skills into list
     df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip() for skill in x.split(',')])
     return df
 
@@ -52,7 +49,6 @@ st.markdown("""
         Let AI help you find where you truly belong... 🎓📊💻🚀
     </p>
 """, unsafe_allow_html=True)
-
 st.markdown("---")
 
 # --- User Input Section ---
@@ -72,13 +68,15 @@ submit = st.button("🚀 Show Me My Career Path!")
 
 st.markdown("---")
 
-if submit:
-    # Run rain animation once at start of result display
-    rain("✨", speed=10, drop_length=7, drop_radius=5, fall_angle=90)
+# --- Reveal Helper Function ---
+def reveal_section(title, content, delay=1.0):
+    with st.expander(title, expanded=True):
+        st.markdown(content)
+    time.sleep(delay)
 
-    # Filter by stream
+# --- Show Result ---
+if submit:
     filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
-    # Filter by career aspiration keyword (case insensitive contains)
     if career_aspiration.strip() != "":
         filtered_df = filtered_df[filtered_df['Career'].str.contains(career_aspiration.strip(), case=False, na=False)]
 
@@ -87,13 +85,7 @@ if submit:
     else:
         st.success("🎉 Yay! We found some career paths matching your interests! ✨")
 
-        # Show first matching career only for simplicity
         career_info = filtered_df.iloc[0]
-
-        def reveal_section(title, content, delay=1.5):
-            st.markdown(f"### {title}")
-            st.markdown(f"{content}")
-            time.sleep(delay)
 
         reveal_section("🎯 Career Name", f"**{career_info['Career']}**")
         reveal_section("📚 Exams to Prepare For", career_info['Exams'])
@@ -106,7 +98,6 @@ if submit:
         reveal_section("🧠 Personality Traits That Fit This Role", career_info['Personality Traits'])
 
         st.markdown("---")
-
         st.markdown("""
         <div style='background-color:#fff3e0; padding:15px; border-radius:8px; color:#bf360c; font-weight:bold;'>
             ✨ Remember, every great journey begins with a single step. Keep learning and stay curious — your future is bright! 🚀🇮🇳
@@ -115,7 +106,6 @@ if submit:
 
         if st.button("🔁 Try Again"):
             st.experimental_rerun()
-
 else:
     st.info("Fill out your stream and career aspiration above, then click the button to find your path! ✨")
 
