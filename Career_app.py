@@ -1,108 +1,122 @@
 import streamlit as st
 import pandas as pd
-from streamlit_extras.timeline import timeline
 import time
+import base64
 
-# --- Sample Data (replace with your actual dataframe read from CSV) ---
-data = [
-    {
-        "Career": "Data Scientist",
-        "Stream": "Science",
-        "Required Skills": "Programming, Data Analysis, Machine Learning",
-        "Exams": "JEE, GATE, CUET",
-        "Education Level Required": "BSc/MSc in Computer Science or related fields",
-        "Salary Range (INR/year)": "₹8L - ₹25L",
-        "Work Environment": "Remote, Office, Hybrid",
-        "Related Industries": "IT, Finance, Healthcare",
-        "Typical Job Titles": "Data Scientist, ML Engineer, Data Analyst",
-        "Personality Traits": "Analytical, Curious, Problem Solver"
-    },
-    {
-        "Career": "IAS Officer",
-        "Stream": "Arts",
-        "Required Skills": "Leadership, Critical Thinking, Communication",
-        "Exams": "UPSC Civil Services Exam",
-        "Education Level Required": "Graduate degree in any discipline",
-        "Salary Range (INR/year)": "₹6L - ₹12L",
-        "Work Environment": "Office, Field Work",
-        "Related Industries": "Government, Public Administration",
-        "Typical Job Titles": "IAS Officer, Collector, Administrator",
-        "Personality Traits": "Empathetic, Decisive, Ethical"
-    },
-    {
-        "Career": "Chartered Accountant",
-        "Stream": "Commerce",
-        "Required Skills": "Accounting, Analytical Thinking, Ethics",
-        "Exams": "CA Foundation, IPCC, CA Final",
-        "Education Level Required": "Commerce Graduate or Equivalent",
-        "Salary Range (INR/year)": "₹5L - ₹20L",
-        "Work Environment": "Office, Corporate",
-        "Related Industries": "Finance, Auditing, Taxation",
-        "Typical Job Titles": "CA, Auditor, Financial Analyst",
-        "Personality Traits": "Detail-oriented, Responsible, Logical"
-    }
-]
+# --- Page Config ---
+st.set_page_config(
+    page_title="Find Your Future: India’s AI Career Guide 🇮🇳✨",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-df = pd.DataFrame(data)
+# --- Background Image ---
+def add_bg_from_url():
+    st.markdown(
+         f"""
+         <style>
+         .stApp {{
+             background-image: url("https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80");
+             background-attachment: fixed;
+             background-size: cover;
+             background-position: center;
+             background-repeat: no-repeat;
+         }}
+         </style>
+         """,
+         unsafe_allow_html=True
+     )
 
-# --- Functions ---
-def create_roadmap(career_info):
-    roadmap_data = [
-        {"time": "Step 1", "title": "🎯 Career", "content": career_info.get("Career", "N/A")},
-        {"time": "Step 2", "title": "📚 Exams to Prepare", "content": career_info.get("Exams", "N/A")},
-        {"time": "Step 3", "title": "🛠️ Required Skills", "content": career_info.get("Required Skills", "N/A")},
-        {"time": "Step 4", "title": "🎓 Education Needed", "content": career_info.get("Education Level Required", "N/A")},
-        {"time": "Step 5", "title": "💸 Salary Range (INR/year)", "content": career_info.get("Salary Range (INR/year)", "N/A")},
-        {"time": "Step 6", "title": "🌐 Work Environment", "content": career_info.get("Work Environment", "N/A")},
-        {"time": "Step 7", "title": "🏢 Related Industries", "content": career_info.get("Related Industries", "N/A")},
-        {"time": "Step 8", "title": "🧑‍💼 Typical Job Titles", "content": career_info.get("Typical Job Titles", "N/A")},
-        {"time": "Step 9", "title": "🧠 Personality Traits", "content": career_info.get("Personality Traits", "N/A")},
-    ]
-    return roadmap_data
+add_bg_from_url()
 
-def staggered_timeline_display(roadmap_data):
-    st.markdown("### 🛤️ Career Roadmap")
-    # We will show steps one-by-one with delay
-    for step in roadmap_data:
-        timeline(pd.DataFrame([step]), "time", "title", "content")
-        time.sleep(1)  # 1 second delay
+# --- Load Dataset ---
+@st.cache_data
+def load_data():
+    df = pd.read_excel("career_data.xlsx")
+    # Process skills into list
+    df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip() for skill in x.split(',')])
+    return df
 
-# --- Streamlit Layout ---
-st.set_page_config(page_title="Find Your Future | AI Career Guide 🇮🇳", layout="centered")
+df = load_data()
 
-st.title("Find Your Future 🔮 | AI-Powered Career Guide for Indian Students 🇮🇳")
-st.write("Let AI help you find where you truly belong... 🎓📊💻🚀")
+# --- Header ---
+st.markdown("""
+    <h1 style='text-align:center; color:#ff5722; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;'>
+        Find Your Future 🔮 | AI-Powered Career Guide for Indian Students 🇮🇳
+    </h1>
+    <p style='text-align:center; font-size:18px; color:#6a1b9a;'>
+        Let AI help you find where you truly belong... 🎓📊💻🚀
+    </p>
+""", unsafe_allow_html=True)
 
-# User inputs
-stream = st.selectbox("What’s your academic stream? 🔬💰🎨", ["Science", "Commerce", "Arts"])
-aspiration = st.text_input("What’s your dream career or aspiration? (e.g., IAS Officer, Lawyer, Data Scientist)")
+st.markdown("---")
 
-if st.button("🚀 Show Me My Career Path!"):
-    # Filter dataset by stream and keyword match in Career column
-    filtered = df[
-        (df["Stream"].str.lower() == stream.lower()) &
-        (df["Career"].str.lower().str.contains(aspiration.strip().lower()))
-    ]
-    
-    if filtered.empty:
-        st.warning("😕 Sorry, no career found matching your input. Please try another.")
+# --- User Input Section ---
+stream_options = {
+    "Science 🔬": "Science",
+    "Commerce 💰": "Commerce",
+    "Arts 🎨": "Arts"
+}
+
+st.markdown("### What's your academic stream?")
+stream_choice = st.selectbox("", options=list(stream_options.keys()))
+selected_stream = stream_options[stream_choice]
+
+career_aspiration = st.text_input("What's your dream career or aspiration? (e.g., IAS Officer, Lawyer, Data Scientist)")
+
+submit = st.button("🚀 Show Me My Career Path!")
+
+st.markdown("---")
+
+if submit:
+    # Filter by stream
+    filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
+    # Filter by career aspiration keyword (case insensitive contains)
+    if career_aspiration.strip() != "":
+        filtered_df = filtered_df[filtered_df['Career'].str.contains(career_aspiration.strip(), case=False, na=False)]
+
+    if filtered_df.empty:
+        st.warning("😞 Oops! No matching careers found. Try different stream or aspiration keywords.")
     else:
-        # Pick first match (or you can let user choose if multiple)
-        career_info = filtered.iloc[0].to_dict()
+        st.success("🎉 Yay! We found some career paths matching your interests! ✨")
 
-        # Celebration animation (confetti)
-        st.balloons()
-        st.success(f"Found your career path: {career_info['Career']}! 🎉")
+        # For simplicity show first match only
+        career_info = filtered_df.iloc[0]
 
-        roadmap = create_roadmap(career_info)
-        staggered_timeline_display(roadmap)
+        # Animated reveal function
+        def reveal_section(title, content, delay=1.0):
+            st.markdown(f"### {title}")
+            st.markdown(f"{content}")
+            time.sleep(delay)
 
-        # Motivational quote footer
+        # Reveal sections one by one with delay
+        reveal_section("🎯 Career Name", f"**{career_info['Career']}**")
+        reveal_section("📚 Exams to Prepare For", career_info['Exams'])
+        reveal_section("🛠️ Required Skills", ", ".join(career_info['Required Skills']))
+        reveal_section("🎓 Education Needed", career_info['Education Level Required'])
+        reveal_section("💸 Salary Range (INR/year)", career_info['Salary Range (INR/year)'])
+        reveal_section("🌐 Work Environment", career_info['Work Environment'])
+        reveal_section("🏢 Related Industries", career_info['Related Industries'])
+        reveal_section("🧑‍💼 Typical Job Titles", career_info['Typical Job Titles'])
+        reveal_section("🧠 Personality Traits That Fit This Role", career_info['Personality Traits'])
+
         st.markdown("---")
-        st.markdown(
-            "✨ **Keep believing in yourself, stay curious, and your dreams will turn into reality!** 💪🌟"
-        )
 
-# Reset button
-if st.button("🔁 Try Again"):
-    st.experimental_rerun()
+        st.markdown("""
+        <div style='background-color:#fff3e0; padding:15px; border-radius:8px; color:#bf360c; font-weight:bold;'>
+            ✨ Remember, every great journey begins with a single step. Keep learning and stay curious — your future is bright! 🚀🇮🇳
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🔁 Try Again"):
+            st.experimental_rerun()
+else:
+    st.info("Fill out your stream and career aspiration above, then click the button to find your path! ✨")
+
+# --- Footer ---
+st.markdown("""
+<hr style="margin-top:40px; margin-bottom:20px;">
+<div style='text-align:center; color:#555; font-size:14px;'>
+    Made with ❤️ by <strong>Darfisha Shaikh</strong> for Hack the Haze 2025 💻🎉
+</div>
+""", unsafe_allow_html=True)
