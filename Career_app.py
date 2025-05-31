@@ -58,7 +58,7 @@ def match_skills(row):
     return all(skill in row['Required Skills'] for skill in selected_skills)
 
 if selected_stream != "Not Sure":
-    filtered_df = df[df['stream'].str.lower() == selected_stream.lower()]
+    filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
 else:
     filtered_df = df.copy()
 
