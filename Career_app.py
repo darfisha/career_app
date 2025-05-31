@@ -39,7 +39,7 @@ def load_data():
 df = load_data()
 
 # --- Animated Header ---
-st.markdown("<h1 style='text-align:center;'>🚀 AI Career Guide for Indian Students 🇮🇳</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;'>🚀 AI Career Guide for Indian Students </h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;'>Let’s find your perfect path... 🎯</p>", unsafe_allow_html=True)
 st.markdown("---")
 
