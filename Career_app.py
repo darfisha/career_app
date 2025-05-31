@@ -1,170 +1,82 @@
-import numpy as np
-import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
-import joblib
 import streamlit as st
+import pandas as pd
+import base64
+from io import BytesIO
 
-# --- Install openpyxl for Excel support (add this to requirements.txt) ---
-# openpyxl
+# Load the dataset
+df = pd.read_excel("career_data.xlsx")
 
-# --- Load Indian career profiles from Excel ---
-career_profiles = pd.read_excel("career_data.xlsx")  # Make sure this file exists in your project
+# Preprocess skills for consistent matching
+df['required_skills'] = df['required_skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
 
-# --- Aptitude Estimation Model (Supervised ML) ---
-class AptitudeEstimator:
-    def __init__(self, model_path=None):
-        self.model = DummyAptitudeModel() if model_path is None else joblib.load(model_path)
-    def predict(self, test_data):
-        return self.model.predict_proba([test_data])[0]
+# Title
+st.title("🎯 Career Suggester")
+st.markdown("##### Find your ideal career based on your interests and strengths!")
 
-# --- Dummy Models for Testing ---
-class DummyAptitudeModel:
-    def predict_proba(self, X):
-        # Return random probabilities for 5 careers
-        return np.random.rand(1, 5)
+# --- Stream Selection ---
+stream_map = {
+    "🔬 Science": "Science",
+    "💼 Commerce": "Commerce",
+    "🎨 Arts/Humanities": "Arts",
+    "❓ Not Sure": "Not Sure"
+}
 
-class DummyEmbeddingModel:
-    def encode(self, texts):
-        # Return random vectors for each text
-        return np.random.rand(len(texts), 5)
+st.markdown("### 🎓 Select Your Stream")
+stream_choice = st.radio("Choose your stream:", list(stream_map.keys()), horizontal=True)
+selected_stream = stream_map[stream_choice]
 
-# --- NLP-driven Goal & Interest Extraction ---
-class GoalInterestExtractor:
-    def __init__(self):
-        self.vectorizer = TfidfVectorizer()
-        self.career_clusters = career_profiles['career'].astype(str).tolist()
-        self.vectorizer.fit(self.career_clusters)
-    def extract(self, user_text):
-        user_vec = self.vectorizer.transform([user_text])
-        cluster_vecs = self.vectorizer.transform(self.career_clusters)
-        sims = cosine_similarity(user_vec, cluster_vecs).flatten()
-        top_idx = np.argmax(sims)
-        return self.career_clusters[top_idx]
+# --- Skill Selection ---
+# Get all unique skills
+all_skills = sorted({skill.strip().lower() for skills in df['required_skills'] for skill in skills})
 
-# --- Skill & Experience Mapping using Embeddings ---
-class SkillMapper:
-    def __init__(self, embedding_model):
-        self.embedding_model = embedding_model
-    def embed_skills(self, skills_list):
-        return self.embedding_model.encode(skills_list)
-    def match_careers(self, user_skills):
-        user_vec = self.embed_skills([user_skills])
-        career_vecs = self.embed_skills(career_profiles['required_skills'].astype(str).tolist())
-        sims = cosine_similarity(user_vec, career_vecs).flatten()
-        top_indices = sims.argsort()[-5:][::-1]
-        return career_profiles.iloc[top_indices][['career', 'stream', 'exams']]
+# Emoji mapping for some common skills
+emoji_skills = {
+    "programming": "💻", "leadership": "🧑‍💼", "communication": "🗣️",
+    "creativity": "🎨", "data analysis": "📊", "problem solving": "🧠",
+    "teaching": "📚", "empathy": "❤️", "law": "⚖️", "biology": "🧬",
+    "teamwork": "🤝", "research": "🔍"
+}
 
-# --- AI-Driven Career Recommendation Engine ---
-class CareerRecommender:
-    def __init__(self, aptitude_model, goal_extractor, skill_mapper):
-        self.aptitude_model = aptitude_model
-        self.goal_extractor = goal_extractor
-        self.skill_mapper = skill_mapper
-    def recommend(self, user_data):
-        aptitude_scores = self.aptitude_model.predict(user_data['aptitude_test'])
-        goal = self.goal_extractor.extract(user_data['aspirations'])
-        skill_matches = self.skill_mapper.match_careers(user_data['skills'])
-        recommendations = skill_matches.copy()
-        recommendations['aptitude_score'] = aptitude_scores[:len(recommendations)]
-        recommendations['goal_match'] = recommendations['career'] == goal
-        return recommendations.sort_values(['goal_match', 'aptitude_score'], ascending=False)
+skill_display = [f"{emoji_skills.get(skill, '')} {skill.title()}" for skill in all_skills]
+skill_map = dict(zip(skill_display, all_skills))
 
-# --- Skill Gap Analysis ---
-def skill_gap_analysis(user_skills, target_career_skills):
-    user_set = set([s.strip().lower() for s in user_skills.split(',')])
-    target_set = set([s.strip().lower() for s in target_career_skills.split(',')])
-    missing = target_set - user_set
-    return list(missing)
+st.markdown("### 🛠️ Select Your Skills")
+selected_skills_display = st.multiselect("Choose skills that describe you:", options=skill_display)
+selected_skills = [skill_map[s] for s in selected_skills_display]
 
-# --- Instantiate dummy models ---
-aptitude_model = AptitudeEstimator()
-goal_extractor = GoalInterestExtractor()
-skill_mapper = SkillMapper(DummyEmbeddingModel())
-recommender = CareerRecommender(aptitude_model, goal_extractor, skill_mapper)
+# --- Filter Logic ---
+def match_skills(row):
+    return all(skill in row['required_skills'] for skill in selected_skills)
 
-# --- Streamlit App UI ---
-st.set_page_config(page_title="Career Guidance Engine", page_icon="🎓", layout="centered")
+if selected_stream != "Not Sure":
+    filtered_df = df[df['stream'].str.lower() == selected_stream.lower()]
+else:
+    filtered_df = df.copy()
 
-with st.sidebar:
-    st.image("https://img.icons8.com/color/96/000000/career.png", width=80)
-    st.title("Career Guidance Engine 🇮🇳")
-    st.markdown("""
-    **Empowering your career journey!**
-    
-    - Personalized recommendations
-    - Skill gap analysis
-    - NEP-aligned learning pathways
-    
-    ---
-    Made with ❤️ using Streamlit
-    """)
+if selected_skills:
+    filtered_df = filtered_df[filtered_df.apply(match_skills, axis=1)]
 
-st.markdown("<h1 style='text-align: center; color: #4F8BF9;'>🚀 Career Guidance Engine (India)</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: #555;'>Find your best-fit career, bridge skill gaps, and plan your learning journey!</h4>", unsafe_allow_html=True)
+# Format results for display
+if not filtered_df.empty:
+    st.markdown("### 🔍 Career Suggestions")
+    filtered_df_display = filtered_df.copy()
+    filtered_df_display['required_skills'] = filtered_df_display['required_skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
+    filtered_df_display.columns = ['Career 👩‍💼', 'Required Skills 🛠️', 'Stream 🎓', 'Exams 📝']
+    st.dataframe(filtered_df_display)
+
+    # Download button (CSV)
+    def convert_df_to_csv(df):
+        return df.to_csv(index=False).encode('utf-8')
+
+    csv = convert_df_to_csv(filtered_df_display)
+    st.download_button("📥 Download as CSV", csv, "career_suggestions.csv", "text/csv")
+else:
+    st.info("No matching careers found. Try adjusting your stream or skills.")
+
+# --- Reset Button ---
+if st.button("🔄 Reset"):
+    st.experimental_rerun()
+
+# --- Footer ---
 st.markdown("---")
-
-col1, col2 = st.columns(2)
-with col1:
-    aspirations = st.text_area("🎯 What are your aspirations?", 
-        "I want to become a civil servant and help society.",
-        help="Describe your dream career or what motivates you.")
-with col2:
-    skills = st.text_area("🛠️ List your skills (comma separated)", 
-        "communication, leadership, general knowledge",
-        help="E.g., programming, teamwork, creativity, etc.")
-
-aptitude_test = st.text_input("📊 Aptitude Test Scores (comma separated)", 
-    "0.7, 0.5, 0.8", 
-    help="Enter your scores or estimates for aptitude (e.g., 0.7, 0.5, 0.8)")
-
-st.markdown("---")
-
-if st.button("✨ Get My Career Recommendations"):
-    with st.spinner("Analyzing your profile and finding the best matches..."):
-        try:
-            aptitude_scores = [float(x.strip()) for x in aptitude_test.split(",")]
-            user_data = {
-                'aptitude_test': aptitude_scores,
-                'aspirations': aspirations,
-                'skills': skills
-            }
-            recommendations = recommender.recommend(user_data)
-            st.success("Here are your top career recommendations! 🎉")
-            st.dataframe(recommendations.style.highlight_max(axis=0, color='#D6EAF8'))
-
-            top_career = recommendations.iloc[0]['career']
-            st.balloons()
-            st.markdown(f"<h3 style='color:#27AE60;'>🏆 Top Career Recommendation: {top_career}</h3>", unsafe_allow_html=True)
-
-            # Skill gap for top career
-            top_skills = career_profiles[career_profiles['career'] == top_career]['required_skills'].values[0]
-            missing_skills = skill_gap_analysis(skills, top_skills)
-            st.info(f"🧩 **Missing Skills for {top_career}:** {', '.join(missing_skills) if missing_skills else 'None'}")
-
-            # Show relevant stream and exams
-            stream = career_profiles[career_profiles['career'] == top_career]['stream'].values[0]
-            exams = career_profiles[career_profiles['career'] == top_career]['exams'].values[0]
-            st.write(f"📚 **Relevant Academic Stream:** `{stream}`")
-            st.write(f"📝 **Relevant Competitive Exam(s):** `{exams}`")
-
-            # Suggest learning pathways (simple example)
-            if missing_skills:
-                with st.expander("🎓 Recommended Learning Pathways"):
-                    for skill in missing_skills:
-                        st.write(f"- Consider NEP-aligned courses or online resources to build: **{skill.strip().capitalize()}**")
-                    st.write(f"📖 You may also prepare for competitive exams like: `{exams}`")
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
-
-with st.expander("🔍 Sample Data Preview"):
-    st.dataframe(career_profiles)
-
-st.markdown("---")
-st.markdown("<p style='text-align: center; color: #888;'>Made by Darfisha Shaikh </p>", unsafe_allow_html=True)
-
-# To run this app with Streamlit:
-# 1. Open a terminal or command prompt.
-# 2. Navigate to the folder containing this file.
-# 3. Run the following command:
-#    streamlit run Career_app.py
+st.markdown("<div style='text-align: center;'>Made with ❤️ by Darfisha Shaikh for Hack the Haze</div>", unsafe_allow_html=True)
