@@ -85,7 +85,7 @@ if not filtered_df.empty:
 
     filtered_df_display = filtered_df.copy()
     filtered_df_display['Required Skills'] = filtered_df_display['Required Skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
-    filtered_df_display.columns = ['Career 👩‍💼', 'Required Skills 🛠️', 'Stream 🎓', 'Exams 📝']
+    filtered_df_display.columns = ['Career', 'Required Skills', 'Stream', 'Exams']
     st.dataframe(filtered_df_display, use_container_width=True)
 
     # Download CSV
