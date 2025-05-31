@@ -1,101 +1,95 @@
+# careercompass_app.py
+
 import streamlit as st
 import pandas as pd
-import base64
-from io import BytesIO
-import random
 
-# Load the dataset
-df = pd.read_excel("career_data.xlsx")
-df['required_skills'] = df['required_skills'].apply(lambda x: [skill.strip().lower() for skill in x.split(',')])
+# Load dataset
+df = pd.read_csv("career_dataset.csv")
 
-# Fun background colors
-page_bg_img = '''
-<style>
-body {
-background-image: linear-gradient(to bottom right, #f7e7ff, #e0f7fa);
-background-size: cover;
-}
-</style>
-'''
-st.markdown(page_bg_img, unsafe_allow_html=True)
+# --- Sidebar Navigation ---
+st.sidebar.page_link("Page 1: Find My Career Path 🔍")
+st.sidebar.page_link("Page 2: Explore All Careers 📚")
 
-# Title
-st.markdown("""
-<h1 style='text-align: center; color: #6a1b9a;'>✨ Career Genie 🧞‍♂️</h1>
-<p style='text-align: center;'>Find magical career paths based on your talents and interests! 🧭</p>
-""", unsafe_allow_html=True)
+# --- Page Routing Logic ---
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 
-# --- Stream Selection ---
-stream_map = {
-    "🔬 Science": "Science",
-    "💼 Commerce": "Commerce",
-    "🎨 Arts/Humanities": "Arts",
-    "❓ Not Sure": "Not Sure"
-}
+# --- Page 1: Career Recommendation ---
+def find_my_career():
+    st.title("Find My Career Path 🔍")
+    st.markdown("Choose your preferences below and get career recommendations! 🧠")
 
-st.markdown("### 🎓 Choose Your Stream")
-stream_choice = st.radio("Which academic world do you belong to?", list(stream_map.keys()), horizontal=True)
-selected_stream = stream_map[stream_choice]
+    stream = st.radio("Select your stream 🎓", ["Science", "Commerce", "Arts", "Not Sure"])
 
-# --- Skill Selection ---
-all_skills = sorted({skill.strip().lower() for skills in df['required_skills'] for skill in skills})
-emoji_skills = {
-    "programming": "💻", "leadership": "🧑‍💼", "communication": "🗣️",
-    "creativity": "🎨", "data analysis": "📊", "problem solving": "🧠",
-    "teaching": "📚", "empathy": "❤️", "law": "⚖️", "biology": "🧬",
-    "teamwork": "🤝", "research": "🔍"
-}
+    hard_skills = ["💻 Programming", "📊 Data Analysis", "📐 Design Thinking", "📚 Research", "📈 Financial Analysis"]
+    soft_skills = ["🗣️ Communication", "🤝 Teamwork", "🧠 Problem-Solving", "💡 Creativity", "⏰ Time Management"]
 
-skill_display = [f"{emoji_skills.get(skill, '⭐')} {skill.title()}" for skill in all_skills]
-skill_map = dict(zip(skill_display, all_skills))
+    selected_skills = st.multiselect("Select your skills ✨", hard_skills + soft_skills)
 
-st.markdown("### 🛠️ Select Your Magical Skills")
-selected_skills_display = st.multiselect("Pick the skills that describe your strengths:", options=skill_display)
-selected_skills = [skill_map[s] for s in selected_skills_display]
+    exam_input = st.text_input("Enter any exams you're interested in or have taken (optional) 📝")
 
-# --- Filter Logic ---
-def match_skills(row):
-    return all(skill in row['required_skills'] for skill in selected_skills)
+    if st.button("🎯 Get Career Recommendations"):
+        filtered_df = df.copy()
 
-if selected_stream != "Not Sure":
-    filtered_df = df[df['stream'].str.lower() == selected_stream.lower()]
-else:
+        if stream != "Not Sure":
+            filtered_df = filtered_df[filtered_df['Stream'].str.contains(stream)]
+
+        if selected_skills:
+            for skill in selected_skills:
+                skill_clean = skill.split(" ")[1] if " " in skill else skill
+                filtered_df = filtered_df[filtered_df['Required Skills'].str.contains(skill_clean, case=False)]
+
+        if exam_input:
+            filtered_df = filtered_df[filtered_df['Exams'].str.contains(exam_input, case=False)]
+
+        st.subheader("🔎 Recommended Careers")
+        if not filtered_df.empty:
+            for _, row in filtered_df.iterrows():
+                with st.container():
+                    st.markdown(f"### 💼 {row['Career']}")
+                    st.markdown(f"**Salary:** ₹{row['Salary Range (INR/year)']}")
+                    st.markdown(f"**Exams:** {row['Exams']}")
+                    st.markdown(f"**Skills:** {row['Required Skills']}")
+                    st.markdown(f"**Demand:** 🔥 {row['Job Demand']}")
+                    st.markdown("---")
+
+            st.download_button("📥 Download Recommendations as CSV", data=filtered_df.to_csv(index=False), file_name="career_recommendations.csv")
+        else:
+            st.info("No careers matched your selection. Try different filters! 🙏")
+
+        if st.button("🔄 Reset Filters"):
+            st.experimental_rerun()
+
+# --- Page 2: Explore All Careers ---
+def explore_all():
+    st.title("Explore All Careers 📚")
+    st.markdown("Search, filter, and discover all available career options! 🧭")
+
+    stream_filter = st.selectbox("Filter by stream 🎓", ["All"] + df['Stream'].unique().tolist())
+    exam_filter = st.text_input("Filter by exam ✍️")
+    skill_filter = st.text_input("Filter by skill 🛠️")
+    trait_filter = st.text_input("Filter by personality trait 🌟")
+
     filtered_df = df.copy()
+    if stream_filter != "All":
+        filtered_df = filtered_df[filtered_df['Stream'] == stream_filter]
+    if exam_filter:
+        filtered_df = filtered_df[filtered_df['Exams'].str.contains(exam_filter, case=False)]
+    if skill_filter:
+        filtered_df = filtered_df[filtered_df['Required Skills'].str.contains(skill_filter, case=False)]
+    if trait_filter:
+        filtered_df = filtered_df[filtered_df['Personality Traits'].str.contains(trait_filter, case=False)]
 
-if selected_skills:
-    filtered_df = filtered_df[filtered_df.apply(match_skills, axis=1)]
+    st.dataframe(filtered_df, use_container_width=True)
 
-# --- Display Career Suggestions ---
-if not filtered_df.empty:
-    st.markdown("## 🔍 Your Dream Careers")
-    st.success(random.choice([
-        "Great picks! Here’s what suits you best! 🌟",
-        "These careers match your vibe perfectly! 💼",
-        "Based on your skills, these roles await you! 🚀"
-    ]))
+    st.caption("⭐ Click the star icon to save favorites (session only)")
 
-    filtered_df_display = filtered_df.copy()
-    filtered_df_display['required_skills'] = filtered_df_display['required_skills'].apply(lambda x: ", ".join([skill.title() for skill in x]))
-    filtered_df_display.columns = ['Career 👩‍💼', 'Required Skills 🛠️', 'Stream 🎓', 'Exams 📝']
-    st.dataframe(filtered_df_display, use_container_width=True)
+    st.markdown("---")
+    st.markdown("Made with ❤️ by Darfisha Shaikh for Hack the Haze 🚀")
 
-    # Download CSV
-    def convert_df_to_csv(df):
-        return df.to_csv(index=False).encode('utf-8')
-
-    csv = convert_df_to_csv(filtered_df_display)
-    st.download_button("📥 Download Career Report as CSV", csv, "career_suggestions.csv", "text/csv")
-else:
-    st.warning("Oops! No matching careers found. Try tweaking your stream or skill selections! 🤔")
-
-# --- Reset Button ---
-if st.button("🔄 Start Over"):
-    st.experimental_rerun()
-
-# --- Footer ---
-st.markdown("""
----
-<div style='text-align: center;'>
-    Made with ❤️ by <strong>Darfisha Shaikh</strong> for <em>Hack the Haze</em> 🌈
-</div>
-""", unsafe_allow_html=True)
+# --- Page Selection Logic ---
+page = st.sidebar.radio("Navigate", ["Find My Career Path 🔍", "Explore All Careers 📚"])
+if page == "Find My Career Path 🔍":
+    find_my_career()
+elif page == "Explore All Careers 📚":
+    explore_all()
