@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import time
 import base64
-import json
 import io
 
 # --- Page Config ---
@@ -28,12 +27,14 @@ add_bg_local()
 
 # --- Load Dataset ---
 @st.cache_data
+@st.cache_data
 def load_data():
     df = pd.read_excel("career_data.xlsx")
-    df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip() for skill in x.split(',')])
+    df['Required Skills'] = df['Required Skills'].apply(
+        lambda x: [skill.strip() for skill in str(x).split(',')] if pd.notnull(x) else []
+    )
     return df
 df = load_data()
-
 # --- Animated Header ---
 st.markdown("<h1 style='text-align:center;'>🚀 AI Career Guide for Indian Students </h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;'>Let’s find your perfect path... 🎯</p>", unsafe_allow_html=True)
