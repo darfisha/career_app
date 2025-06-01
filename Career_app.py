@@ -30,7 +30,7 @@ add_bg_local()
 def load_data():
     df = pd.read_excel("career_data.xlsx")
     df['Required Skills'] = df['Required Skills'].apply(
-        lambda x: [skill.strip() for skill in str(x).split(',')] if pd.notnull(x) else []
+        lambda x: [skill.strip() for skill in str(x).split(',')] if pd.notnull(x) and isinstance(x, str) and x.strip() != '' else []
     )
     return df
 df = load_data()
