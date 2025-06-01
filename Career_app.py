@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import time
 import base64
-from streamlit_lottie import st_lottie
 import json
+import io
 
 # --- Page Config ---
 st.set_page_config(page_title="AI Career Guide", layout="centered")
@@ -25,10 +25,6 @@ def add_bg_local():
         unsafe_allow_html=True
     )
 add_bg_local()
-
-
-
-
 
 # --- Load Dataset ---
 @st.cache_data
@@ -78,14 +74,28 @@ if submit:
         st.warning("😔 No match found. Try refining your input.")
     else:
         career_info = filtered_df.iloc[0]
-        
 
         reveal_section("🎯 Career Name", f"*{career_info['Career']}*")
         reveal_section("📚 Exams to Prepare For", career_info['Exams'])
         reveal_section("🛠️ Required Skills", ", ".join(career_info['Required Skills']))
         reveal_section("🎓 Education Needed", career_info['Education Level Required'])
         reveal_section("💸 Salary Range (INR/year)", career_info['Salary Range (INR/year)'])
-        reveal_section("🌐 Work Environment", career_info['Work Environment'])
+
+        # --- Download Option ---
+        result_str = f"""
+Career Name: {career_info['Career']}
+Exams to Prepare For: {career_info['Exams']}
+Required Skills: {', '.join(career_info['Required Skills'])}
+Education Needed: {career_info['Education Level Required']}
+Salary Range (INR/year): {career_info['Salary Range (INR/year)']}
+"""
+        result_bytes = io.BytesIO(result_str.encode())
+        st.download_button(
+            label="⬇️ Download My Career Path",
+            data=result_bytes,
+            file_name="career_path.txt",
+            mime="text/plain"
+        )
 
         st.markdown("---")
         st.markdown("""
