@@ -1,70 +1,94 @@
-# Career Guidance Engine
 
-This project is an AI-powered career guidance engine designed specifically for the Indian education system. It leverages machine learning and natural language processing (NLP) to provide personalized career recommendations based on user aptitude, aspirations, skills, and experience.
+---
 
-## Features
+# 🚀 AI Career Guide for Indian Students
 
-- **Aptitude Estimation**: Utilizes machine learning models to predict user strengths from test data or behavioral patterns.
-- **Goal & Interest Extraction**: Analyzes user inputs (text/audio) to extract aspirations and align them with relevant career clusters.
-- **Skill & Experience Mapping**: Represents user competencies in vector space and matches them with various career profiles.
-- **Career Recommendation Engine**: Suggests optimal career paths aligned with Indian academic streams, competitive exams (e.g., UPSC, NEET, JEE, CA), and job market trends.
-- **Skill Gap Analysis**: Identifies missing competencies and recommends learning pathways in accordance with the National Education Policy (NEP) and competitive exams.
+**AI Career Guide** is a personalized web app built using **Streamlit** to help Indian students explore the right career paths based on their academic stream and dream job. This tool provides detailed insights such as required skills, exams to prepare for, education levels, and expected salary ranges.
 
-## Project Structure
+---
+
+## 🔧 Features
+
+* 🎯 **Career Matching** based on academic stream and dream job
+* 📚 **Exam Recommendations** to achieve your career goals
+* 🛠️ **Skill Insights** to understand what’s required
+* 🎓 **Education Roadmap** with suggested qualifications
+* 💸 **Salary Estimates** to guide your expectations
+* ⬇️ **Downloadable Career Summary** in `.txt` format
+* 🌄 Aesthetic **background image** and animated UI elements
+
+---
+
+## 🖥️ Demo
+
+https://careerapp-aegm6mag7pcytuverzghoa.streamlit.app/
+
+---
+
+## 📁 Files and Structure
 
 ```
-career-guidance-engine
-├── src
-│   ├── app.py
-│   ├── models
-│   │   ├── aptitude_model.py
-│   │   ├── nlp_goal_extractor.py
-│   │   ├── skill_embedding.py
-│   │   ├── recommendation_engine.py
-│   │   └── skill_gap_analyzer.py
-│   ├── data
-│   │   ├── indian_academic_streams.csv
-│   │   ├── exams_list.csv
-│   │   └── job_market_trends.csv
-│   ├── utils
-│   │   ├── preprocessing.py
-│   │   └── helpers.py
-│   ├── api
-│   │   ├── routes.py
-│   │   └── schemas.py
-│   └── types
-│       └── index.py
-├── requirements.txt
-└── README.md
+📦 AI Career Guide
+├── career_data.xlsx        # Dataset with career info
+├── background.jpg          # Background image for UI
+├── app.py                  # Streamlit application
+├── README.md               # Project documentation
 ```
 
-## Installation
+---
 
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   ```
-2. Navigate to the project directory:
-   ```
-   cd career-guidance-engine
-   ```
-3. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+## ▶️ How to Run Locally
 
-## Usage
+1. **Clone this repository**
 
-1. Start the application:
-   ```
-   python src/app.py
-   ```
-2. Access the API at `http://localhost:5000`.
+```bash
+git clone https://github.com/your-username/ai-career-guide.git
+cd ai-career-guide
+```
 
-## Contributing
+2. **Install dependencies**
 
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+Make sure Python 3.7+ is installed.
 
-## License
+```bash
+pip install -r requirements.txt
+```
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+> If `requirements.txt` doesn’t exist, manually install:
+
+```bash
+pip install streamlit pandas openpyxl
+```
+
+3. **Run the app**
+
+```bash
+https://careerapp-aegm6mag7pcytuverzghoa.streamlit.app/
+```
+
+4. **Upload Files (if not included)**
+   Ensure `career_data.xlsx` and `background.jpg` are in the same directory.
+
+---
+
+## 📝 Dataset Format (`career_data.xlsx`)
+
+| Stream  | Career       | Exams     | Required Skills   | Education Level Required | Salary Range (INR/year) |
+| ------- | ------------ | --------- | ----------------- | ------------------------ | ----------------------- |
+| Science | Data Analyst | JEE, etc. | Python, SQL, etc. | Bachelor's in CS/Stats   | 4,00,000 – 10,00,000    |
+
+Ensure columns are named exactly as shown.
+
+---
+
+## 👩‍💻 Author
+
+**Darfisha Shaikh**
+Built for **Hack the Haze 2025**
+Made with ❤️ using Streamlit
+
+---
+
+
+
+
