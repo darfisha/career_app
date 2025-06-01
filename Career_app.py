@@ -27,7 +27,6 @@ add_bg_local()
 
 # --- Load Dataset ---
 @st.cache_data
-@st.cache_data
 def load_data():
     df = pd.read_excel("career_data.xlsx")
     df['Required Skills'] = df['Required Skills'].apply(
