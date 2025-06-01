@@ -40,7 +40,12 @@ st.markdown("<p style='text-align:center;'>Let’s find your perfect path... �
 st.markdown("---")
 
 # --- Input Section ---
-stream_options = {"Science 🔬": "Science", "Commerce 💰": "Commerce", "Arts 🎨": "Arts"}
+stream_options = {
+    "Science 🔬": "Science",
+    "Commerce 💰": "Commerce",
+    "Arts 🎨": "Arts",
+    "All 🌐": "All"
+}
 stream_choice = st.selectbox("Your Academic Stream", list(stream_options.keys()))
 selected_stream = stream_options[stream_choice]
 career_aspiration = st.text_input("Your dream job (e.g., Lawyer, IAS Officer, Data Analyst)")
