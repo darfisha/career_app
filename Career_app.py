@@ -1,115 +1,93 @@
 import streamlit as st
 import pandas as pd
-import time
-import base64
-from streamlit_lottie import st_lottie
-import json
+import numpy as np
+from sklearn.preprocessing import MultiLabelBinarizer, StandardScaler, LabelEncoder
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+import re
+import joblib
 
-# --- Page Config ---
-st.set_page_config(page_title="AI Career Guide", layout="centered")
+# Load the pre-trained model and preprocessors
+try:
+    clf = joblib.load('random_forest_model.pkl')
+    mlb = joblib.load('multilabel_binarizer.pkl')
+    scaler = joblib.load('scaler.pkl')
+    le = joblib.load('label_encoder.pkl')
+    tfidf = joblib.load('tfidf_vectorizer.pkl')
+    df = pd.read_csv('career_path_in_all_field.csv')
+except FileNotFoundError:
+    st.error("Model or preprocessors not found. Please ensure 'random_forest_model.pkl', 'multilabel_binarizer.pkl', 'scaler.pkl', 'label_encoder.pkl', and 'tfidf_vectorizer.pkl' are in the same directory.")
+    st.stop()
 
-# --- Background Image ---
-def add_bg_local():
-    with open("background.jpg", "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("data:image/jpg;base64,{encoded_string}");
-            background-size: cover;
-            background-attachment: fixed;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-add_bg_local()
+# --- Data Preprocessing Functions ---
+def clean_skills(skills):
+    if pd.isnull(skills):
+        return []
+    return [re.sub(r'[^a-zA-Z0-9 ]', '', s.strip().lower()) for s in skills.split(',') if s.strip()]
 
+df['skills'] = df['skills'].apply(clean_skills)
 
+# --- Prediction/Recommendation Function ---
+def get_career_recommendations(user_interest_text, user_experience_years, df, clf, mlb, scaler, tfidf):
+    user_interest_vec = tfidf.transform([user_interest_text]).toarray()[0]
+    user_interests = [mlb.classes_[i] for i in np.where(user_interest_vec > 0)[0]]
 
+    user_skills_vec = mlb.transform([user_interests])
+    user_experience = scaler.transform([[user_experience_years]])
+    user_vector = np.hstack([user_skills_vec, user_experience])
 
+    # aptitude_prediction = clf.predict(user_vector) # Uncomment if you want to use this
 
-# --- Load Dataset ---
-@st.cache_data
-def load_data():
-    df = pd.read_excel("career_data.xlsx")
-    df['Required Skills'] = df['Required Skills'].apply(lambda x: [skill.strip() for skill in x.split(',')])
-    return df
-df = load_data()
+    skills_encoded = mlb.transform(df['skills'])
+    experience_encoded = scaler.transform(df[['experience']])
+    career_vectors = np.hstack([skills_encoded, experience_encoded])
 
-# --- Animated Header ---
-st.markdown("<h1 style='text-align:center;'>🚀 AI Career Guide for Indian Students </h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center;'>Let’s find your perfect path... 🎯</p>", unsafe_allow_html=True)
-st.markdown("---")
+    similarities = cosine_similarity(user_vector, career_vectors)
+    top_indices = similarities.argsort()[0][::-1][:3]
 
-# --- Input Section ---
-stream_options = {"Science 🔬": "Science", "Commerce 💰": "Commerce", "Arts 🎨": "Arts"}
-stream_choice = st.selectbox("Your Academic Stream", list(stream_options.keys()))
-selected_stream = stream_options[stream_choice]
-career_aspiration = st.text_input("Your dream job (e.g., Lawyer, IAS Officer, Data Analyst)")
-submit = st.button("🔍 Reveal My Career Path")
+    recommendations = []
+    for idx in top_indices:
+        recommendations.append({
+            'career': df.iloc[idx]['career'],
+            'similarity': similarities[0, idx]
+        })
 
-# --- Animation Functions ---
-def typing_effect(text, speed=0.01):
-    placeholder = st.empty()
-    typed = ""
-    for char in text:
-        typed += char
-        placeholder.markdown(f"### {typed}")
-        time.sleep(speed)
+    return recommendations, user_interests # , aptitude_prediction # uncomment if aptitude is returned
 
-def reveal_section(title, content, delay=0.3):
-    typing_effect(title)
-    st.markdown(content)
-    time.sleep(delay)
+def get_skill_gap_analysis(top_career, user_skills, df):
+    career_skills = set(df[df['career'] == top_career]['skills'].iloc[0])
+    user_skills_set = set(user_skills)
+    missing_skills = career_skills - user_skills_set
+    return missing_skills
 
-# --- Main Logic ---
-if submit:
-    with st.spinner("🔄 Analyzing your stream and aspiration..."):
-        time.sleep(2)
-    st.progress(100)
+# --- Streamlit App ---
+st.title("AI-Powered Career Guidance Engine")
+st.header("Enter Your Information")
 
-    filtered_df = df[df['Stream'].str.lower() == selected_stream.lower()]
-    if career_aspiration.strip():
-        filtered_df = filtered_df[filtered_df['Career'].str.contains(career_aspiration.strip(), case=False, na=False)]
+user_interest_text = st.text_area("Describe your interests, skills, and aspirations:")
+user_experience_years = st.number_input("Enter your years of experience:", min_value=0.0, step=0.5)
 
-    if filtered_df.empty:
-        st.warning("😔 No match found. Try refining your input.")
+if st.button("Get Career Recommendations"):
+    if not user_interest_text:
+        st.warning("Please describe your interests.")
     else:
-        career_info = filtered_df.iloc[0]
-        
+        recommendations, user_interests = get_career_recommendations(user_interest_text, user_experience_years, df, clf, mlb, scaler, tfidf) # Adjust return values if aptitude is used
 
-        reveal_section("🎯 Career Name", f"**{career_info['Career']}**")
-        reveal_section("📚 Exams to Prepare For", career_info['Exams'])
-        reveal_section("🛠️ Required Skills", ", ".join(career_info['Required Skills']))
-        reveal_section("🎓 Education Needed", career_info['Education Level Required'])
-        reveal_section("💸 Salary Range (INR/year)", career_info['Salary Range (INR/year)'])
-        reveal_section("🌐 Work Environment", career_info['Work Environment'])
+        st.header("Top Career Recommendations:")
+        for rec in recommendations:
+            st.write(f"- **{rec['career']}** (Similarity: {rec['similarity']:.2f})")
 
-        st.markdown("---")
-        st.markdown("""
-        <h3 style="text-align:center; animation: blink 1s infinite;">
-            🌟 Believe in yourself — your dream career awaits! 🌟
-        </h3>
-        <style>
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.2; }
-            100% { opacity: 1; }
-        }
-        </style>
-        """, unsafe_allow_html=True)
+        if recommendations:
+            top_career_name = recommendations[0]['career']
+            missing_skills = get_skill_gap_analysis(top_career_name, user_interests, df)
 
-        if st.button("🔁 Start Over"):
-            st.experimental_rerun()
-else:
-    st.info("Choose a stream and type in your dream job to start.")
-
-# --- Footer ---
-st.markdown("""
-<hr>
-<div style='text-align:center; font-size:14px; color:#555;'>
-    Made with ❤️ by <strong>Darfisha Shaikh</strong> for Hack the Haze 2025 🎉
-</div>
-""", unsafe_allow_html=True)
+            st.header(f"Skill Gap Analysis for '{top_career_name}':")
+            if missing_skills:
+                st.write("Missing Skills:")
+                for skill in missing_skills:
+                    st.write(f"- {skill.title()}")
+                st.subheader("Recommended Learning Resources:")
+                for skill in missing_skills:
+                    st.write(f"- Learn {skill.title()} on Coursera/Udemy/edX")
+            else:
+                st.write("None! You match all required skills for this career.")
